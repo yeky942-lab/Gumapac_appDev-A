@@ -1,4 +1,5 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
 import { store } from '../app/store';
 import { UPDATE_ORDER_STATUS } from '../app/reducers/ordersReducer';
@@ -6,7 +7,7 @@ import { UPDATE_ORDER_STATUS } from '../app/reducers/ordersReducer';
 /**
  * Display local notification (for foreground messages)
  */
-export const displayLocalNotification = (title: string, body: string, data?: any) => {
+export const displayLocalNotification = async (title: string, body: string, data?: any) => {
   try {
     // Handle order status updates
     if (data?.type === 'order_status_update' && data?.order_id && data?.status) {
@@ -21,13 +22,41 @@ export const displayLocalNotification = (title: string, body: string, data?: any
       console.log('✅ [Notifications] Order status updated in Redux store');
     }
 
-    // Show alert when app is in foreground
+    // Create notification channel for Android
+    if (Platform.OS === 'android') {
+      const channelId = await notifee.createChannel({
+        id: 'default',
+        name: 'Default Channel',
+        importance: AndroidImportance.HIGH,
+        sound: 'default',
+        vibration: true,
+      });
+    }
+
+    // Display system notification
+    await notifee.displayNotification({
+      title: title,
+      body: body,
+      data: data || {},
+      android: {
+        channelId: 'default',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
+      },
+      ios: {
+        sound: 'default',
+      },
+    });
+
+    console.log('✅ [Notifications] System notification displayed');
+  } catch (error) {
+    console.log('❌ [Notifications] Notification error:', error);
+    // Fallback to alert if notification fails
     Alert.alert(title, body, [
       { text: 'OK', onPress: () => console.log('Notification dismissed') }
     ]);
-    console.log('✅ [Notifications] Alert displayed for foreground message');
-  } catch (error) {
-    console.log('❌ [Notifications] Alert error:', error);
   }
 };
 
