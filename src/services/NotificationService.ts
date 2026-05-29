@@ -2,6 +2,21 @@ import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messag
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
 
 /**
+ * Display local notification (for foreground messages)
+ */
+export const displayLocalNotification = (title: string, body: string, data?: any) => {
+  try {
+    // Show alert when app is in foreground
+    Alert.alert(title, body, [
+      { text: 'OK', onPress: () => console.log('Notification dismissed') }
+    ]);
+    console.log('✅ [Notifications] Alert displayed for foreground message');
+  } catch (error) {
+    console.log('❌ [Notifications] Alert error:', error);
+  }
+};
+
+/**
  * Create notification channel (required for Android 8.0+)
  * Firebase handles this automatically, but we ensure permissions are granted
  */
@@ -84,8 +99,15 @@ export const setupNotificationListeners = () => {
   // Foreground message handler
   const unsubscribe = messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
     console.log('Received foreground message:', remoteMessage);
-    // Handle foreground message - show in-app notification
-    // You can use react-native-push-notification or local notification here
+    
+    // Display local notification when app is in foreground
+    if (remoteMessage.notification) {
+      displayLocalNotification(
+        remoteMessage.notification.title || 'New Notification',
+        remoteMessage.notification.body || '',
+        remoteMessage.data
+      );
+    }
   });
 
   // Background/quit state messages are handled automatically by FCM
