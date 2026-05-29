@@ -6,6 +6,7 @@ export const CREATE_ORDER_REQUEST = 'CREATE_ORDER_REQUEST';
 export const CREATE_ORDER_SUCCESS = 'CREATE_ORDER_SUCCESS';
 export const CREATE_ORDER_FAILURE = 'CREATE_ORDER_FAILURE';
 export const CLEAR_CREATE_ORDER_STATUS = 'CLEAR_CREATE_ORDER_STATUS';
+export const UPDATE_ORDER_STATUS = 'UPDATE_ORDER_STATUS';
 
 // Types
 interface Order {
@@ -59,6 +60,11 @@ interface ClearCreateOrderStatusAction {
   type: typeof CLEAR_CREATE_ORDER_STATUS;
 }
 
+interface UpdateOrderStatusAction {
+  type: typeof UPDATE_ORDER_STATUS;
+  payload: { orderId: string; status: string };
+}
+
 type OrdersAction =
   | FetchOrdersRequestAction
   | FetchOrdersSuccessAction
@@ -66,7 +72,8 @@ type OrdersAction =
   | CreateOrderRequestAction
   | CreateOrderSuccessAction
   | CreateOrderFailureAction
-  | ClearCreateOrderStatusAction;
+  | ClearCreateOrderStatusAction
+  | UpdateOrderStatusAction;
 
 // Initial State
 const initialState: OrdersState = {
@@ -133,6 +140,16 @@ export default function ordersReducer(state: OrdersState = initialState, action:
         ...state,
         createOrderSuccess: false,
         createOrderError: null,
+      };
+
+    case UPDATE_ORDER_STATUS:
+      return {
+        ...state,
+        orders: state.orders.map(order =>
+          order.id === action.payload.orderId
+            ? { ...order, status: action.payload.status }
+            : order
+        ),
       };
     
     default:

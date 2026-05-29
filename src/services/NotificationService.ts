@@ -1,11 +1,26 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
+import { store } from '../app/store';
+import { UPDATE_ORDER_STATUS } from '../app/reducers/ordersReducer';
 
 /**
  * Display local notification (for foreground messages)
  */
 export const displayLocalNotification = (title: string, body: string, data?: any) => {
   try {
+    // Handle order status updates
+    if (data?.type === 'order_status_update' && data?.order_id && data?.status) {
+      // Dispatch action to update order status in Redux store
+      store.dispatch({
+        type: UPDATE_ORDER_STATUS,
+        payload: {
+          orderId: data.order_id,
+          status: data.status,
+        },
+      });
+      console.log('✅ [Notifications] Order status updated in Redux store');
+    }
+
     // Show alert when app is in foreground
     Alert.alert(title, body, [
       { text: 'OK', onPress: () => console.log('Notification dismissed') }
