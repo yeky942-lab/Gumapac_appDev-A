@@ -14,8 +14,9 @@ import {
   UPDATE_PROFILE_FAILURE,
   LOGOUT,
 } from '../reducers/authReducer';
-import { authLogin, authRegister, authMe, authLogout, updateProfile } from '../api/auth';
+import { authLogin, authRegister, authMe, authLogout, updateProfile, registerFCMToken } from '../api/auth';
 import { RootState } from '../store';
+import { getFCMToken } from '../../services/NotificationService';
 
 // Action interfaces
 interface LoginAction {
@@ -57,6 +58,18 @@ function* loginSaga(action: LoginAction): Generator<any, void, any> {
 
     // Fetch user profile after successful login
     yield put({ type: GET_USER_REQUEST });
+
+    // Register FCM token after successful login
+    try {
+      const fcmToken = yield call(getFCMToken);
+      if (fcmToken && result.token) {
+        console.log('📱 [SAGA] Registering FCM token after login');
+        yield call(registerFCMToken, result.token, fcmToken, 'Android Device', 'android');
+        console.log('✅ [SAGA] FCM token registered successfully');
+      }
+    } catch (fcmError) {
+      console.log('⚠️  [SAGA] FCM token registration failed (non-critical):', (fcmError as Error).message);
+    }
 
   } catch (error) {
     console.log('❌ [SAGA] Login error:', (error as Error).message);
